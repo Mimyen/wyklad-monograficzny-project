@@ -3,7 +3,7 @@ import { useEffect, useReducer, useRef } from 'react';
 import { ApiError } from './ActivityForm';
 
 const BASE_URL = "http://127.0.0.1:8000"
-// Jeśli masz już ApiError/BASE_URL z poprzedniej wiadomości, zostaw je i tylko dodaj te funkcje.
+
 export type Activity = {
   id: string;
   title: string;
@@ -115,7 +115,6 @@ export default function ActivityList() {
     return () => abortRef.current?.abort();
   }, []);
 
-  // Optymistyczne toggle z rollbackiem
   async function toggleDone(id: string, done: boolean) {
     const prev = state.items;
     dispatch({ type: 'OPTIMISTIC_TOGGLE', id, done });
@@ -127,7 +126,6 @@ export default function ActivityList() {
     }
   }
 
-  // Optymistyczne usuwanie z rollbackiem
   async function remove(id: string) {
     const prev = state.items;
     dispatch({ type: 'OPTIMISTIC_DELETE', id });

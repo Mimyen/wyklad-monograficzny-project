@@ -32,7 +32,7 @@ export async function createActivity(input: NewActivity): Promise<void> {
     try {
       const data = await res.json();
       if (data?.detail) msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
-    } catch { /* ignoruj parse error */ }
+    } catch { }
     throw new ApiError(msg, res.status);
   }
 }
@@ -42,7 +42,7 @@ type Props = { onCreated: () => void };
 
 type FormState = {
   title: string;
-  date: string;      // pole <input type="date"> (YYYY-MM-DD) lub ""
+  date: string;   
   notes: string;
   loading: boolean;
   error: string | null;
@@ -72,7 +72,7 @@ function reducer(state: FormState, action: Action): FormState {
     case "SUBMIT_START":
       return { ...state, loading: true, error: null, success: false };
     case "SUBMIT_SUCCESS":
-      return { ...initialState, success: true }; // czyści pola i pokaże sukces
+      return { ...initialState, success: true };
     case "SUBMIT_ERROR":
       return { ...state, loading: false, error: action.message, success: false };
     case "RESET_AFTER_SUCCESS":
@@ -88,7 +88,6 @@ export default function ActivityForm({ onCreated }: Props) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    // prosta walidacja lokalna (możesz podmienić na zod w przyszłości)
     if (!title.trim()) {
       dispatch({ type: "SUBMIT_ERROR", message: "Tytuł jest wymagany." });
       return;
