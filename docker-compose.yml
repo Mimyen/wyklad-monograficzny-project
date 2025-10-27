@@ -1,11 +1,71 @@
-version: '3.9'
 services:
+  db:
+    image: postgres:13
+    container_name: postgres-db-template
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    container_name: fastapi-app-template
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Możesz też przenieść to do .env i użyć ${DATABASE_URL}
+      DATABASE_URL: postgresql://postgres:password@db:5432/postgres
+    # Dla dev — hot reload, jeśli Twój serwer na to pozwala:
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/server.py:/app/server.py
+    ports:
+      - "8000:8000"
+    # Alternatywnie można nadpisać komendę, ale mamy ją w Dockerfile
+    # command: python server.py --dev
+    env_file:
+      - ./.env
+    restart: unless-stopped
+
   web:
-    build: .
+    build: ./frontend
+    container_name: nextjs-app
+    depends_on:
+      - api
     ports:
       - "3000:3000"
-    volumes:
-      - ./data:/app/data   # trwałość activities.json
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      # Jeśli frontend ma wołać backend po nazwie usługi:
+      NEXT_PUBLIC_API_URL: http://api:8000
+    volumes:
+      - ./frontend/data:/app/data   # trwałość activities.json
     restart: unless-stopped
+
+  # Opcjonalnie pgAdmin:
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   container_name: pgadmin-template
+  #   ports:
+  #     - "8888:80"
+  #   volumes:
+  #     - pgadmin-data:/var/lib/pgadmin
+  #   env_file:
+  #     - ./.env
+  #   depends_on:
+  #     - db
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+  # pgadmin-data:
